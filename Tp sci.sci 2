@@ -1,0 +1,70 @@
+// NOM        PRENOMS                NUMERO DE BADGE
+// SILUE     Gamilè Maritatou       20230609
+// SOME      Bégouré Yann Steeve    20230669
+// TAPSOBA   Stéphane Davy Ghislain 20230675
+//  Encadré par Dr. Babacar LEYE 
+// Date 10/11/2026
+function [t, y] = echantillonner(f, a, b, n)
+    t = linspace(a, b, n+1);
+    y = f(t);
+endfunction
+
+// Quadrature des trapezes composee (pas constant)
+function I = trapezes(t, y)
+    h = t(2) - t(1);
+    I = h * (sum(y) - (y(1) + y($)) / 2);
+endfunction
+
+// Quadrature de Simpson composee (nombre pair d'intervalles)
+function I = simpson(t, y)
+    h = t(2) - t(1);
+    m = length(y);
+    I = h/3 * (y(1) + y(m) + 4*sum(y(2:2:m-1)) + 2*sum(y(3:2:m-2)));
+endfunction
+
+// ---------- Cas continu ----------
+function y = modele(x)
+    y = exp(x);
+endfunction
+
+Iref = %e - 1; // Integrale exacte sur [0,1]
+ns = [4 8 16 32];
+ET = zeros(1, length(ns)); ES = ET;
+errT = ET; errS = ET;
+
+for k = 1:length(ns)
+    n = ns(k);
+    [t, y] = echantillonner(modele, 0, 1, n);
+    // TODO 1
+    ET(k) = trapezes(t, y);
+    ES(k) = simpson(t, y);
+    // TODO 2
+    errT(k) = abs(ET(k) - Iref);
+    errS(k) = abs(ES(k) - Iref);
+    mprintf("n=%d T=%.9f S=%.9f ET=%.3e ES=%.3e\n", n, ET(k), ES(k), errT(k), errS(k));
+end
+
+for k = 1:length(ns)-1
+    // TODO 3 : ordre observe entre n et 2n
+    pT = log(errT(k) / errT(k+1)) / log(2);
+    pS = log(errS(k) / errS(k+1)) / log(2);
+    mprintf("n=%d -> %d : pT=%.3f pS=%.3f\n", ns(k), ns(k+1), pT, pS);
+end
+
+// ---------- Cas discret : pompe, temps en minutes ----------
+tmin = [0 10 20 30 40];
+Pkw  = [2.0 2.6 3.0 2.5 1.9];
+th = zeros(1, length(tmin));
+for i = 1:length(tmin)
+    // TODO 4 : minutes -> heures
+    th(i) = tmin(i) / 60;
+end
+
+// TODO 5 : energie en kWh
+Etrap = trapezes(th, Pkw);
+Esimp = simpson(th, Pkw);
+mprintf("Pompe : trapezes=%.6f kWh ; Simpson=%.6f kWh\n", Etrap, Esimp);
+mprintf("Ecart=%.6f kWh ; borne des lectures=%.6f kWh\n", abs(Etrap - Esimp), 0.1*40/60);
+
+// Dans le rapport : dire ce que les calculs permettent de conclure.
+// Ne pas deduire un ordre de convergence des cinq mesures de la pompe.
